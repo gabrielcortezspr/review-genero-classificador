@@ -1,6 +1,6 @@
 # Predição de Gênero em Reviews
 
-**Aluno:** Seu Nome
+**Aluno:** Gabriel Cortez
 
 **Data:** 12/05/2026
 
@@ -8,7 +8,7 @@
 
 ## Slide 1 — Capa
 - Título: Predição de Gênero em Reviews
-- Nome: Seu Nome
+- Nome: Gabriel Cortez
 - Data: 12/05/2026
 
 ---

@@ -1,7 +1,11 @@
+"""Feature extraction for the review gender classifier.
 
-import pickle
+`TextFeatureExtractor` is a scikit-learn transformer that combines word TF-IDF,
+character n-gram TF-IDF and hand-crafted style features. It lives in its own module
+so the pickled pipeline can be loaded by `predict.py`.
+"""
+
 import re
-import sys
 
 import numpy as np
 import pandas as pd
@@ -9,15 +13,7 @@ import pandas as pd
 from scipy.sparse import csr_matrix, hstack
 
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.calibration import CalibratedClassifierCV
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    classification_report,
-    confusion_matrix,
-    f1_score,
-)
-from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 
@@ -388,107 +384,3 @@ class TextFeatureExtractor(BaseEstimator, TransformerMixin):
             style_features,
         ])
 
-
-sys.modules.setdefault(
-    "modelo_gabriel_cortez",
-    sys.modules[__name__]
-)
-
-TextFeatureExtractor.__module__ = "modelo_gabriel_cortez"
-
-
-# ============================================================
-# MAIN
-# ============================================================
-
-def main():
-
-    print("Carregando dados...")
-
-    train_df = pd.read_csv(
-        "treino.csv",
-        low_memory=False
-    )
-
-    val_df = pd.read_csv(
-        "validacao.csv",
-        low_memory=False
-    )
-
-    X_train = train_df["review_text"].fillna("")
-    y_train = train_df["reviewer_gender"]
-
-    X_val = val_df["review_text"].fillna("")
-    y_val = val_df["reviewer_gender"]
-
-    base_model = LogisticRegression(
-        max_iter=10000,
-        class_weight="balanced",
-        random_state=42,
-        C=0.5,
-    )
-
-    calibrated_model = CalibratedClassifierCV(
-        estimator=base_model,
-        method="sigmoid",
-        cv=3,
-    )
-
-    model = Pipeline([
-        ("features", TextFeatureExtractor()),
-        ("classifier", calibrated_model)
-    ])
-
-    print("\nTreinando...")
-
-    model.fit(
-        X_train,
-        y_train
-    )
-
-    print("\nValidando...")
-
-    preds = model.predict(X_val)
-
-    f1 = f1_score(
-        y_val,
-        preds,
-        average="weighted"
-    )
-
-    print(f"\nF1: {f1:.4f}")
-
-    print("\nMatriz:")
-
-    print(
-        confusion_matrix(
-            y_val,
-            preds,
-            labels=["F", "M"]
-        )
-    )
-
-    print("\nRelatorio:")
-
-    print(
-        classification_report(
-            y_val,
-            preds,
-            digits=4
-        )
-    )
-
-    with open("modelo_gabriel_cortez.pkl", "wb") as f:
-
-        pickle.dump(
-            model,
-            f,
-            protocol=pickle.HIGHEST_PROTOCOL
-        )
-
-    print("\nModelo salvo: modelo_gabriel_cortez.pkl")
-
-
-if __name__ == "__main__":
-
-    main()
