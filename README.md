@@ -1,52 +1,64 @@
-# Classificador de gênero em reviews
+# Review Author Gender Classifier
 
-Modelo que estima o gênero declarado do autor (M/F) a partir do texto de uma review de
-e-commerce. Trabalho da AP2 de Mineração de Dados, sobre o dataset
-[B2W-Reviews01](https://github.com/americanas-tech/b2w-reviews01) (Americanas.com, 2018).
+![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-pipeline-F7931E?logo=scikitlearn&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-## Abordagem
+Text classifier that estimates the self-declared gender (M/F) of the author of a Brazilian
+e-commerce review. Built for the Data Mining course on the
+[B2W-Reviews01](https://github.com/americanas-tech/b2w-reviews01) dataset (Americanas.com,
+~130k reviews).
 
-- **Pré-processamento:** remoção de HTML e URLs, dígitos normalizados para `NUM`, caixa baixa.
-- **Representação:** TF-IDF de palavras e de n-gramas de caracteres, mais features de estilo
-  (tamanho do texto, exclamações, emojis, palavras de categoria de produto).
-- **Modelo:** `LogisticRegression` (`C=0.5`, `class_weight="balanced"`) calibrada com
-  `CalibratedClassifierCV`, tudo num `Pipeline` do scikit-learn.
+## Approach
 
-## Resultado na validação
+- **Preprocessing:** HTML and URL removal, digits normalized to `NUM`, lowercasing.
+- **Representation:** word TF-IDF + character n-gram TF-IDF, plus style features (text
+  length, exclamation marks, emojis, product-category words), combined in a custom
+  scikit-learn transformer ([`src/text_features.py`](src/text_features.py)).
+- **Model:** `LogisticRegression` (`C=0.5`, `class_weight="balanced"`) with sigmoid
+  calibration (`CalibratedClassifierCV`), all inside a single `Pipeline` that is pickled
+  as one object.
 
-| Métrica | Valor |
+## Validation results
+
+| Metric | Value |
 |---|---|
-| F1 ponderado | **0,684** |
-| Acurácia | 0,685 |
-| F1 (F) / F1 (M) | 0,659 / 0,707 |
+| Weighted F1 | **0.684** |
+| Accuracy | 0.685 |
+| F1 (F) / F1 (M) | 0.659 / 0.707 |
 
-25.647 reviews de validação. Matriz de confusão e discussão das limitações em
-[`slide.md`](slide.md) e [`Documentacao/slides.pdf`](Documentacao/slides.pdf).
+25,647 validation reviews. Confusion matrix and discussion in
+[`docs/slides.pdf`](docs/slides.pdf).
 
-## Como rodar
+## Limitations
 
-```sh
-pip install pandas numpy scipy scikit-learn
-python modelo_gabriel_cortez.py   # treina com treino.csv, valida com validacao.csv e salva o .pkl
-python teste.py                   # carrega o modelo salvo e prediz textos de exemplo
+Gender inferred from text is a weak and biased signal: the model mostly learns **which
+product category was bought**, not anything about who wrote the review. This is an exercise
+in text classification, not a tool for inferring people's characteristics.
+
+## Getting started
+
+```bash
+pip install -r requirements.txt
+python src/train.py                         # trains on data/train.csv, validates, saves models/
+python src/predict.py                       # predicts a few sample reviews
+python src/predict.py "Adorei o perfume"    # or your own texts
 ```
 
-## Estrutura
+## Project structure
 
-| Arquivo | Conteúdo |
-|---|---|
-| `modelo_gabriel_cortez.py` | Extração de features, treino e validação |
-| `modelo_gabriel_cortez.pkl` | Modelo treinado |
-| `notebook.ipynb` | Notebook da entrega |
-| `treino.csv`, `validacao.csv` | Partições do dataset fornecidas pela disciplina |
-| `Documentacao/` | Especificação do trabalho, instruções e slides |
+```
+├── src/
+│   ├── text_features.py   # TextFeatureExtractor: preprocessing + TF-IDF + style features
+│   ├── train.py           # training and validation
+│   └── predict.py         # loads the saved model and predicts
+├── models/                # trained pipeline (gender_classifier.pkl)
+├── data/                  # train/validation splits provided by the course
+├── notebooks/             # exploration notebook
+└── docs/                  # slides, dataset paper and the assignment brief (Portuguese)
+```
 
-## Limitações
+## License
 
-Gênero inferido de texto é um sinal fraco e enviesado: o modelo aprende sobretudo a categoria
-do produto comprado, não algo sobre quem escreve. Serve como exercício de classificação de
-texto, não como ferramenta para inferir características de pessoas.
-
-## Licença
-
-[MIT](LICENSE)
+Code under [MIT](LICENSE). The B2W-Reviews01 data is distributed under its own license
+(CC BY-NC-SA 4.0).
